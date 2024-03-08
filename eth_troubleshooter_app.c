@@ -1,5 +1,5 @@
 
-#include "finik_eth_app.h"
+#include "eth_troubleshooter_app.h"
 
 #include <furi.h>
 #include <furi_hal_power.h>
@@ -12,7 +12,7 @@
 #include "eth_worker_i.h"
 #include "eth_view_process.h"
 
-#define TAG "FinikEthApp"
+#define TAG "EthTroubleshooterApp"
 
 static void draw_process_selector(Canvas* canvas, DrawProcess selector, CursorPosition cursor) {
     uint8_t y = 0;
@@ -55,9 +55,9 @@ static void draw_battery_cunsumption(Canvas* canvas, double cons) {
     furi_string_free(string);
 }
 
-static void finik_eth_app_draw_callback(Canvas* canvas, void* ctx) {
+static void eth_troubleshooter_app_draw_callback(Canvas* canvas, void* ctx) {
     furi_assert(ctx);
-    FinikEthApp* app = ctx;
+    EthTroubleshooterApp* app = ctx;
 
     canvas_clear(canvas);
 
@@ -82,28 +82,28 @@ static void finik_eth_app_draw_callback(Canvas* canvas, void* ctx) {
     }
 }
 
-static void finik_eth_battery_info_update_model(void* ctx) {
+static void eth_troubleshooter_battery_info_update_model(void* ctx) {
     furi_assert(ctx);
-    FinikEthApp* app = ctx;
+    EthTroubleshooterApp* app = ctx;
     power_get_info(app->power, &app->info);
 }
 
-static void finik_eth_app_input_callback(InputEvent* input_event, void* ctx) {
+static void eth_troubleshooter_app_input_callback(InputEvent* input_event, void* ctx) {
     furi_assert(ctx);
 
     FuriMessageQueue* event_queue = ctx;
     furi_message_queue_put(event_queue, input_event, FuriWaitForever);
 }
 
-FinikEthApp* finik_eth_app_alloc() {
-    FinikEthApp* app = malloc(sizeof(FinikEthApp));
+EthTroubleshooterApp* eth_troubleshooter_app_alloc() {
+    EthTroubleshooterApp* app = malloc(sizeof(EthTroubleshooterApp));
 
     app->view_port = view_port_alloc();
     app->event_queue = furi_message_queue_alloc(8, sizeof(InputEvent));
     app->eth_worker = eth_worker_alloc();
 
-    view_port_draw_callback_set(app->view_port, finik_eth_app_draw_callback, app);
-    view_port_input_callback_set(app->view_port, finik_eth_app_input_callback, app->event_queue);
+    view_port_draw_callback_set(app->view_port, eth_troubleshooter_app_draw_callback, app);
+    view_port_input_callback_set(app->view_port, eth_troubleshooter_app_input_callback, app->event_queue);
 
     app->gui = furi_record_open(RECORD_GUI);
     gui_add_view_port(app->gui, app->view_port, GuiLayerFullscreen);
@@ -115,7 +115,7 @@ FinikEthApp* finik_eth_app_alloc() {
     return app;
 }
 
-void finik_eth_app_free(FinikEthApp* app) {
+void eth_troubleshooter_app_free(EthTroubleshooterApp* app) {
     furi_assert(app);
 
     view_port_enabled_set(app->view_port, false);
@@ -130,7 +130,7 @@ void finik_eth_app_free(FinikEthApp* app) {
     furi_record_close(RECORD_POWER);
 }
 
-void finit_eth_app_key_handler(FinikEthApp* app, InputKey key) {
+void eth_troubleshooter_app_key_handler(EthTroubleshooterApp* app, InputKey key) {
     if(app->cursor_position == CURSOR_CHOOSE_PROCESS) {
         if(key == InputKeyUp || key == InputKeyDown) {
             app->draw_process =
@@ -176,19 +176,19 @@ void finit_eth_app_key_handler(FinikEthApp* app, InputKey key) {
     }
 }
 
-int32_t finik_eth_app(void* p) {
+int32_t eth_troubleshooter_app(void* p) {
     UNUSED(p);
-    FinikEthApp* app = finik_eth_app_alloc();
+    EthTroubleshooterApp* app = eth_troubleshooter_app_alloc();
 
     InputEvent event;
     uint8_t long_press = 0;
     InputKey long_press_key = 0;
 
     while(1) {
-        finik_eth_battery_info_update_model(app);
+        eth_troubleshooter_battery_info_update_model(app);
         if(furi_message_queue_get(app->event_queue, &event, 200) == FuriStatusOk) {
             if(event.type == InputTypePress) {
-                finit_eth_app_key_handler(app, event.key);
+                eth_troubleshooter_app_key_handler(app, event.key);
             } else if(event.type == InputTypeLong) {
                 long_press = 1;
                 long_press_key = event.key;
@@ -198,7 +198,7 @@ int32_t finik_eth_app(void* p) {
             }
         }
         if(long_press && long_press_key != InputKeyBack) {
-            finit_eth_app_key_handler(app, long_press_key);
+            eth_troubleshooter_app_key_handler(app, long_press_key);
         }
         if(app->cursor_position == CURSOR_EXIT) {
             eth_run(app->eth_worker, EthWorkerProcessExit);
@@ -207,6 +207,6 @@ int32_t finik_eth_app(void* p) {
         view_port_update(app->view_port);
     }
 
-    finik_eth_app_free(app);
+    eth_troubleshooter_app_free(app);
     return 0;
 }

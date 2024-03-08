@@ -2,7 +2,7 @@
 
 #include "eth_worker.h"
 #include "eth_worker_i.h"
-#include "finik_eth_icons.h"
+#include "eth_troubleshooter_icons.h"
 
 #include "lib/ioLibrary_Driver/u8g2/csrc/u8g2.h"
 
